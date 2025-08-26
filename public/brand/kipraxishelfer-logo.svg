@@ -1,0 +1,17 @@
+<svg width="140" height="40" viewBox="0 0 140 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Medical Cross Icon -->
+  <rect x="4" y="4" width="32" height="32" rx="8" fill="#2563EB"/>
+  <rect x="18" y="12" width="4" height="16" fill="white"/>
+  <rect x="12" y="18" width="16" height="4" fill="white"/>
+  
+  <!-- Stethoscope accent -->
+  <circle cx="30" cy="14" r="2" fill="#60A5FA"/>
+  <path d="M30 16 C32 18, 34 20, 34 22" stroke="#60A5FA" stroke-width="1.5" fill="none"/>
+  
+  <!-- Brand Text -->
+  <text x="44" y="16" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#1E293B">kipraxis</text>
+  <text x="44" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#2563EB">helfer</text>
+  
+  <!-- AI accent dot -->
+  <circle cx="132" cy="20" r="3" fill="#10B981"/>
+</svg> 
