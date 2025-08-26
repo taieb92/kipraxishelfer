@@ -7,7 +7,7 @@ import { CallsFilters, type CallFilters } from "@/components/calls/calls-filters
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import type { CallItem, CallStatus, CallCategory } from "@/lib/types"
-import { AlertCircle, RefreshCw } from "lucide-react"
+import { AlertCircle, RefreshCw, Phone } from "lucide-react"
 
 // Mock API response interface matching the specification
 interface ApiResponse {
@@ -99,62 +99,54 @@ const mockApiCalls: ApiResponse['items'] = [
   },
   {
     id: "5",
+    callerName: "Lisa Klein",
     callerNumber: "+49 30 99887766",
     direction: "inbound",
-    dateISO: "2024-01-15T08:20:00Z",
+    dateISO: "2024-01-15T13:20:00Z",
     category: "info",
     status: "completed",
-    durationSec: 60,
-    tags: ["Öffnungszeiten", "Frage"]
+    durationSec: 75,
+    tags: ["Information", "Öffnungszeiten"]
   },
   {
     id: "6",
-    callerName: "Petra Hoffmann",
-    callerNumber: "+49 30 44433322",
+    callerName: "Peter Schulz",
+    callerNumber: "+49 30 33445566",
     direction: "inbound",
-    dateISO: "2024-01-15T16:10:00Z",
-    category: "appointment",
-    status: "booking_made",
-    durationSec: 200,
-    tags: ["Vorsorge", "Termin"]
-  },
-  {
-    id: "7",
-    callerName: "Klaus Bauer",
-    callerNumber: "+49 30 77788899",
-    direction: "inbound",
-    dateISO: "2024-01-15T13:30:00Z",
-    category: "receipt",
+    dateISO: "2024-01-15T15:10:00Z",
+    category: "other",
     status: "failed",
     durationSec: 30,
-    tags: ["Rezept", "Abgebrochen"]
+    tags: ["Falsch verbunden"]
   }
 ]
 
-// Mock API call function
-async function fetchCalls(filters: CallFilters): Promise<ApiResponse> {
+// Mock API function
+const fetchCalls = async (filters: CallFilters): Promise<ApiResponse> => {
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300))
+  await new Promise(resolve => setTimeout(resolve, 800))
   
   let filteredCalls = [...mockApiCalls]
   
   // Apply filters
-  if (filters.status && filters.status !== "all") {
+  if (filters.status && filters.status !== 'all') {
     filteredCalls = filteredCalls.filter(call => call.status === filters.status)
   }
   
-  if (filters.categories.length > 0) {
-    filteredCalls = filteredCalls.filter(call => filters.categories.includes(call.category))
+  if (filters.categories && filters.categories.length > 0) {
+    filteredCalls = filteredCalls.filter(call => filters.categories!.includes(call.category))
   }
   
   if (filters.searchQuery) {
-    const query = filters.searchQuery.toLowerCase()
+    const searchLower = filters.searchQuery.toLowerCase()
     filteredCalls = filteredCalls.filter(call => 
-      call.callerName?.toLowerCase().includes(query) ||
-      call.callerNumber?.includes(query)
+      call.callerName?.toLowerCase().includes(searchLower) ||
+      call.callerNumber?.includes(searchLower) ||
+      call.tags.some(tag => tag.toLowerCase().includes(searchLower))
     )
   }
   
+  // Apply date range filter
   if (filters.dateRange) {
     filteredCalls = filteredCalls.filter(call => {
       const callDate = new Date(call.dateISO)
@@ -175,198 +167,165 @@ export default function CallsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
+  // State
   const [calls, setCalls] = useState<CallItem[]>([])
+  const [totalCalls, setTotalCalls] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filters, setFilters] = useState<CallFilters>({
-    status: "action_needed", // Default as specified
-    categories: [],
-    searchQuery: ""
-  })
-
-  // Check if there are action_needed calls available
-  const [hasActionNeededCalls, setHasActionNeededCalls] = useState(true)
-
-  // Initialize filters from URL params on mount
-  useEffect(() => {
-    const urlStatus = searchParams.get('status') as CallStatus | "all" || "action_needed"
-    const urlQuery = searchParams.get('q') || ""
-    const urlCats = searchParams.get('cats')?.split(',').filter(Boolean) as CallCategory[] || []
-    const urlFrom = searchParams.get('from')
-    const urlTo = searchParams.get('to')
-
-    let dateRange: { from: Date; to: Date } | undefined
-    if (urlFrom && urlTo) {
-      dateRange = {
-        from: new Date(urlFrom),
-        to: new Date(urlTo)
-      }
-    }
-
-    const urlFilters: CallFilters = {
-      status: urlStatus,
-      categories: urlCats,
-      searchQuery: urlQuery,
-      dateRange
-    }
-
-    setFilters(urlFilters)
-  }, [searchParams])
-
-  // Check for action_needed calls on mount
-  useEffect(() => {
-    const checkActionNeededCalls = async () => {
-      try {
-        const response = await fetchCalls({ 
-          status: "action_needed", 
-          categories: [],
-          searchQuery: ""
-        })
-        setHasActionNeededCalls(response.items.length > 0)
-        
-        // If no action_needed calls, fall back to "all" as specified
-        if (response.items.length === 0 && !searchParams.get('status')) {
-          setFilters(prev => ({ ...prev, status: "all" }))
+  
+  // Initialize filters from URL
+  const initialFilters: CallFilters = useMemo(() => ({
+    status: (searchParams.get('status') as CallStatus) || 'action_needed',
+    categories: searchParams.get('cats')?.split(',').filter(Boolean) as CallCategory[] || [],
+    searchQuery: searchParams.get('q') || '',
+    dateRange: (() => {
+      const from = searchParams.get('from')
+      const to = searchParams.get('to')
+      if (from && to) {
+        return {
+          from: new Date(from),
+          to: new Date(to)
         }
-      } catch (err) {
-        console.error('Error checking action needed calls:', err)
       }
-    }
-    
-    checkActionNeededCalls()
-  }, [])
+      return undefined
+    })()
+  }), [searchParams])
 
-  // Fetch calls when filters change
+  // Load calls when filters change
   useEffect(() => {
     const loadCalls = async () => {
       try {
         setLoading(true)
         setError(null)
         
-        const response = await fetchCalls(filters)
-        const convertedCalls = response.items.map(convertApiCall)
-        setCalls(convertedCalls)
+        const response = await fetchCalls(initialFilters)
+        setCalls(response.items.map(convertApiCall))
+        setTotalCalls(response.total)
       } catch (err) {
-        setError('Fehler beim Laden der Anrufe. Bitte versuchen Sie es erneut.')
-        console.error('Error fetching calls:', err)
+        console.error('Error loading calls:', err)
+        setError('Anrufe konnten nicht geladen werden.')
       } finally {
         setLoading(false)
       }
     }
 
     loadCalls()
-  }, [filters])
+  }, [initialFilters])
 
-  // Handle filter changes from CallsFilters component
+  // Update URL when filters change
   const handleFiltersChange = useCallback((newFilters: CallFilters) => {
-    setFilters(newFilters)
-  }, [])
+    const params = new URLSearchParams()
+    
+    if (newFilters.status && newFilters.status !== 'all') {
+      params.set('status', newFilters.status)
+    }
+    
+    if (newFilters.searchQuery) {
+      params.set('q', newFilters.searchQuery)
+    }
+    
+    if (newFilters.categories && newFilters.categories.length > 0) {
+      params.set('cats', newFilters.categories.join(','))
+    }
+    
+    if (newFilters.dateRange) {
+      params.set('from', newFilters.dateRange.from.toISOString().split('T')[0])
+      params.set('to', newFilters.dateRange.to.toISOString().split('T')[0])
+    }
+    
+    router.push(`/calls?${params.toString()}`)
+  }, [router])
 
-  // Retry function for error state
+  // Handle retry
   const handleRetry = () => {
-    setError(null)
-    handleFiltersChange(filters)
+    const loadCalls = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        const response = await fetchCalls(initialFilters)
+        setCalls(response.items.map(convertApiCall))
+        setTotalCalls(response.total)
+      } catch (err) {
+        setError('Anrufe konnten nicht geladen werden.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCalls()
   }
 
-  // Memoized empty state check
-  const isEmpty = useMemo(() => {
-    return !loading && calls.length === 0
-  }, [loading, calls.length])
-
-  // Check if filters are applied (for empty state)
-  const hasActiveFilters = useMemo(() => {
-    return filters.status !== "all" || 
-           filters.categories.length > 0 || 
-           filters.searchQuery ||
-           filters.dateRange
-  }, [filters])
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          Anrufe
-        </h1>
-        <p className="text-slate-600">
-          Verwalten und überprüfen Sie alle eingehenden und ausgehenden Anrufe
-        </p>
-      </div>
-
-      {/* Show info if no action needed calls initially */}
-      {!hasActionNeededCalls && filters.status === "all" && (
-        <Alert className="border-blue-200 bg-blue-50">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            Aktuell gibt es keine Anrufe, die Ihre Aufmerksamkeit benötigen. 
-            Alle angezeigten Anrufe sind bereits bearbeitet.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>{error}</span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRetry}
-              className="ml-4"
-            >
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Erneut versuchen
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Filters */}
-              <CallsFilters 
-          onFiltersChange={handleFiltersChange}
-        />
-
-      {/* Results Summary */}
-      {!loading && !error && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-slate-600">
-            {calls.length > 0 ? (
-              <span>
-                {calls.length} Anruf{calls.length !== 1 ? 'e' : ''} gefunden
-              </span>
-            ) : hasActiveFilters ? (
-              <span>Keine Anrufe für die aktuellen Filter gefunden</span>
-            ) : (
-              <span>Noch keine Anrufe vorhanden</span>
-            )}
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Page Header */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Anrufe</h1>
+            <p className="text-slate-600 mt-1">
+              Verwalten Sie alle eingehenden und ausgehenden Anrufe
+            </p>
           </div>
           
-          {/* Quick action for empty action_needed state */}
-          {isEmpty && filters.status === "action_needed" && (
+          {/* Action buttons - Responsive */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <Button 
-              variant="outline"
-              onClick={() => handleFiltersChange({ ...filters, status: "all" })}
-              className="text-sm"
+              variant="outline" 
+              size="sm"
+              className="w-full sm:w-auto"
+              onClick={() => window.location.reload()}
             >
-              Alle Anrufe anzeigen
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Aktualisieren
             </Button>
-          )}
+          </div>
         </div>
+      </div>
+
+      {/* Filters */}
+      <CallsFilters 
+        onFiltersChange={handleFiltersChange}
+      />
+
+      {/* Content */}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <span>{error}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRetry}
+              className="w-full sm:w-auto"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Wiederholen
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <CallsTable 
+          calls={calls} 
+          loading={loading}
+          className="min-h-[400px]"
+        />
       )}
 
-      {/* Calls Table */}
-      <CallsTable 
-        calls={calls} 
-        loading={loading}
-        className="shadow-sm"
-      />
-      
-      {/* Footer Info */}
-      {!loading && calls.length > 0 && (
-        <div className="text-xs text-slate-500 text-center">
-          Klicken Sie auf eine Zeile, um Details anzuzeigen
+      {/* Empty state when no calls */}
+      {!loading && !error && calls.length === 0 && (
+        <div className="text-center py-12">
+          <div className="mx-auto h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+            <Phone className="h-8 w-8 text-slate-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+            Keine Anrufe gefunden
+          </h3>
+          <p className="text-slate-600 max-w-sm mx-auto">
+            Es wurden keine Anrufe mit den aktuellen Filtereinstellungen gefunden.
+            Versuchen Sie andere Filtereinstellungen oder entfernen Sie einige Filter.
+          </p>
         </div>
       )}
     </div>

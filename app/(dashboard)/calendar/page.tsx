@@ -100,381 +100,259 @@ interface Holiday {
 const mockHolidays: Holiday[] = [
   {
     id: "1",
-    startISO: "2024-01-01",
+    startISO: "2024-01-01T00:00:00Z",
     note: "Neujahr"
   },
   {
-    id: "2", 
-    startISO: "2024-12-24",
-    endISO: "2024-12-26",
+    id: "2",
+    startISO: "2024-12-24T00:00:00Z",
+    endISO: "2024-12-26T23:59:59Z",
     note: "Weihnachtsferien"
-  }
-]
-
-// Mock conflicts for demonstration
-const mockConflicts = [
-  {
-    id: "c1",
-    patientName: "Maria Schmidt",
-    anonymized: false,
-    startISO: "2024-12-24T09:30:00Z",
-    endISO: "2024-12-24T10:00:00Z", 
-    service: "Routineuntersuchung"
   },
   {
-    id: "c2",
-    patientName: undefined,
-    anonymized: true,
-    startISO: "2024-12-24T10:30:00Z",
-    endISO: "2024-12-24T11:00:00Z",
-    service: "Blutabnahme"
+    id: "3",
+    startISO: "2024-05-01T00:00:00Z",
+    note: "Tag der Arbeit"
+  },
+  {
+    id: "4",
+    startISO: "2024-10-03T00:00:00Z",
+    note: "Tag der Deutschen Einheit"
   }
 ]
-
-// Mock API functions
-const createHoliday = async (holidayData: { startISO: string; endISO?: string; note?: string }) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
-  // Mock conflict detection
-  const hasConflicts = Math.random() > 0.6 // 40% chance of conflicts
-  const conflictCount = hasConflicts ? Math.floor(Math.random() * 3) + 1 : 0
-  
-  return {
-    holidayId: `holiday-${Date.now()}`,
-    conflicts: hasConflicts ? mockConflicts.slice(0, conflictCount) : [],
-    totalConflicts: conflictCount
-  }
-}
-
-const createReschedulerJobs = async (options: any) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1500))
-  
-  return {
-    ok: true,
-    jobsCreated: options.appointmentIds.length
-  }
-}
-
-const createAppointment = async (appointmentData: any) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500))
-  
-  return {
-    id: `appointment-${Date.now()}`
-  }
-}
 
 export default function CalendarPage() {
   const { toast } = useToast()
+  
+  // State
   const [view, setView] = useState<"day" | "week">("week")
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [settings, setSettings] = useState<CalendarSettings>(initialSettings)
-  const [holidays, setHolidays] = useState(mockHolidays)
   const [appointments, setAppointments] = useState(mockAppointments)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
-  
-  // Appointment creation from calendar click
-  const [appointmentDialog, setAppointmentDialog] = useState<{
-    isOpen: boolean
-    initialDate?: Date
-    initialTime?: string
-  }>({
-    isOpen: false
-  })
-  
-  // Holiday impact dialog state
-  const [impactDialog, setImpactDialog] = useState<{
-    isOpen: boolean
-    holidayTitle: string
-    totalConflicts: number
-    conflicts: any[]
-  }>({
-    isOpen: false,
-    holidayTitle: "",
-    totalConflicts: 0,
-    conflicts: [],
-  })
+  const [holidays, setHolidays] = useState<Holiday[]>(mockHolidays)
+  const [settings, setSettings] = useState<CalendarSettings>(initialSettings)
+  const [showHoursEditor, setShowHoursEditor] = useState(false)
+  const [showHolidayList, setShowHolidayList] = useState(false)
+  const [showAppointmentButton, setShowAppointmentButton] = useState(false)
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ date: Date; hour: number } | null>(null)
 
-  // Mock Doctolib connection state
-  const [isDoctolibConnected] = useState(true)
-
-  const navigateDate = (direction: "prev" | "next") => {
-    if (view === "day") {
-      setCurrentDate(direction === "next" ? addDays(currentDate, 1) : subDays(currentDate, 1))
-    } else {
-      setCurrentDate(direction === "next" ? addWeeks(currentDate, 1) : subWeeks(currentDate, 1))
-    }
-  }
-
-  const goToToday = () => {
+  // Navigation functions
+  const goToToday = useCallback(() => {
     setCurrentDate(new Date())
-  }
-
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setCurrentDate(date)
-      setIsDatePickerOpen(false)
-    }
-  }
-
-  const handleSettingsSave = (newSettings: CalendarSettings) => {
-    setSettings(newSettings)
-    toast({
-      title: "Einstellungen gespeichert",
-      description: "Die Kalendereinstellungen wurden erfolgreich aktualisiert.",
-    })
-  }
-
-  // Holiday management
-  const handleAddHoliday = useCallback(async (holidayData: { startISO: string; endISO?: string; note?: string }) => {
-    try {
-      const result = await createHoliday(holidayData)
-      
-      // Add holiday to list
-      const newHoliday = {
-        id: result.holidayId,
-        startISO: holidayData.startISO,
-        endISO: holidayData.endISO,
-        note: holidayData.note
-      }
-      setHolidays(prev => [...prev, newHoliday])
-      
-      // Open impact dialog
-      setImpactDialog({
-        isOpen: true,
-        holidayTitle: holidayData.note || "Neuer Feiertag",
-        totalConflicts: result.totalConflicts,
-        conflicts: result.conflicts,
-      })
-      
-    } catch (error) {
-      console.error('Error creating holiday:', error)
-      toast({
-        title: "Fehler",
-        description: "Feiertag konnte nicht erstellt werden.",
-        variant: "destructive"
-      })
-    }
-  }, [toast])
-
-  const handleEditHoliday = useCallback(async (id: string, holidayData: { startISO: string; endISO?: string; note?: string }) => {
-    // In real app, this would call API
-    setHolidays(prev => prev.map(h => h.id === id ? { ...h, ...holidayData } : h))
-    
-    toast({
-      title: "Feiertag aktualisiert",
-      description: "Die Änderungen wurden gespeichert.",
-    })
-  }, [toast])
-
-  const handleDeleteHoliday = useCallback(async (id: string) => {
-    // In real app, this would call DELETE API
-    setHolidays(prev => prev.filter(h => h.id !== id))
-    
-    toast({
-      title: "Feiertag gelöscht",
-      description: "Der Feiertag wurde erfolgreich entfernt.",
-    })
-  }, [toast])
-
-  const handleStartRescheduling = useCallback(async (options: any) => {
-    try {
-      const result = await createReschedulerJobs(options)
-      
-      setImpactDialog(prev => ({ ...prev, isOpen: false }))
-      
-      toast({
-        title: "Umplanung gestartet",
-        description: `${result.jobsCreated} Umplanungs-Aufgaben erstellt. Fortschritt unter 'Calls' einsehbar.`,
-      })
-      
-    } catch (error) {
-      console.error('Error starting rescheduling:', error)
-      toast({
-        title: "Fehler",
-        description: "Umplanung konnte nicht gestartet werden.",
-        variant: "destructive"
-      })
-    }
-  }, [toast])
-
-  const handleAddAppointment = useCallback(async (appointmentData: any) => {
-    if (!FEATURE_FLAGS.CAL_APPOINTMENTS) return
-    
-    try {
-      const result = await createAppointment(appointmentData)
-      
-      const newAppointment = {
-        ...appointmentData,
-        id: result.id,
-        title: appointmentData.service || appointmentData.patientName || "Neuer Termin",
-        source: "native" as const,
-        practitioner: "Dr. Müller"
-      }
-      
-      setAppointments(prev => [...prev, newAppointment])
-      
-      toast({
-        title: "Termin erstellt",
-        description: "Der neue Termin wurde dem Kalender hinzugefügt.",
-      })
-      
-    } catch (error) {
-      console.error('Error creating appointment:', error)
-      toast({
-        title: "Fehler",
-        description: "Termin konnte nicht erstellt werden.",
-        variant: "destructive"
-      })
-    }
-  }, [toast])
-
-  const handleAppointmentClick = (appointment: any) => {
-    if (appointment.doctolibLink) {
-      window.open(appointment.doctolibLink, "_blank")
-    }
-  }
-
-  const handleTimeSlotClick = useCallback((date: Date, hour: number) => {
-    const timeString = `${hour.toString().padStart(2, '0')}:00`
-    setAppointmentDialog({
-      isOpen: true,
-      initialDate: date,
-      initialTime: timeString
-    })
   }, [])
 
+  const goToPrevious = useCallback(() => {
+    setCurrentDate(prev => view === "day" ? subDays(prev, 1) : subWeeks(prev, 1))
+  }, [view])
+
+  const goToNext = useCallback(() => {
+    setCurrentDate(prev => view === "day" ? addDays(prev, 1) : addWeeks(prev, 1))
+  }, [view])
+
+  // Handle time slot clicks for appointment creation
+  const handleTimeSlotClick = useCallback((date: Date, hour: number) => {
+    setSelectedTimeSlot({ date, hour })
+    setShowAppointmentButton(true)
+  }, [])
+
+  // Handle appointment creation
+  const handleAppointmentCreate = useCallback((appointment: any) => {
+    setAppointments(prev => [...prev, appointment])
+    setShowAppointmentButton(false)
+    setSelectedTimeSlot(null)
+    toast({
+      title: "Termin erstellt",
+      description: "Der Termin wurde erfolgreich hinzugefügt.",
+    })
+  }, [toast])
+
+  // Handle appointment click
+  const handleAppointmentClick = useCallback((appointment: any) => {
+    // In a real app, this would open appointment details
+    console.log("Appointment clicked:", appointment)
+  }, [])
+
+  // Handle holiday impact
+  const handleHolidayImpact = useCallback((impact: any) => {
+    console.log("Holiday impact:", impact)
+    toast({
+      title: "Feiertag hinzugefügt",
+      description: "Der Feiertag wurde erfolgreich hinzugefügt.",
+    })
+  }, [toast])
+
   return (
-    <div className="flex h-full">
-      {/* Sidebar */}
-      <div
-        className={cn(
-          "transition-all duration-300 border-r bg-background",
-          sidebarOpen ? "w-80" : "w-0 overflow-hidden",
-        )}
-      >
-        <div className="p-4 space-y-4">
-          <HoursEditor settings={settings} onSave={handleSettingsSave} />
-          <HolidayList 
-            holidays={holidays}
-            onAddHoliday={handleAddHoliday}
-            onEditHoliday={handleEditHoliday}
-            onDeleteHoliday={handleDeleteHoliday}
-          />
-        </div>
-      </div>
-
-      {/* Main Calendar */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Bar */}
-        <div className="flex items-center justify-between p-4 border-b bg-background">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
-            </Button>
-
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => navigateDate("prev")}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => navigateDate("next")}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="gap-2 bg-transparent">
-                  <CalendarIcon className="h-4 w-4" />
-                  {format(currentDate, view === "day" ? "dd.MM.yyyy" : "'KW' w, yyyy", { locale: de })}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={currentDate} onSelect={handleDateSelect} initialFocus locale={de} />
-              </PopoverContent>
-            </Popover>
-
-            <Button variant="outline" onClick={goToToday}>
-              <Today className="h-4 w-4 mr-1" />
-              Heute
-            </Button>
-
-            {/* Sync indicator */}
-            <Badge 
-              variant="outline" 
-              className={cn(
-                "text-xs",
-                isDoctolibConnected 
-                  ? "bg-green-50 text-green-700 border-green-200"
-                  : "bg-red-50 text-red-700 border-red-200"
-              )}
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Page Header */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Kalender</h1>
+            <p className="text-slate-600 mt-1">
+              Terminplanung, Öffnungszeiten und Feiertage verwalten
+            </p>
+          </div>
+          
+          {/* Action buttons - Responsive */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowHoursEditor(true)}
+              className="w-full sm:w-auto"
             >
-              {isDoctolibConnected ? (
-                <>
-                  <Wifi className="h-3 w-3 mr-1" />
-                  Sync aktiv
-                </>
-              ) : (
-                <>
-                  <WifiOff className="h-3 w-3 mr-1" />
-                  Offline
-                </>
-              )}
-            </Badge>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Appointment creation button */}
+              <PanelLeft className="h-4 w-4 mr-2" />
+              Öffnungszeiten
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowHolidayList(true)}
+              className="w-full sm:w-auto"
+            >
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              Feiertage
+            </Button>
+            
             {FEATURE_FLAGS.CAL_APPOINTMENTS && (
-              <AppointmentButton 
-                onAddAppointment={handleAddAppointment}
-              />
+              <Button
+                size="sm"
+                onClick={() => setShowAppointmentButton(true)}
+                className="w-full sm:w-auto"
+              >
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                Termin hinzufügen
+              </Button>
             )}
-
-            <Select value={view} onValueChange={(value: "day" | "week") => setView(value)}>
-              <SelectTrigger className="w-24">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="day">Tag</SelectItem>
-                <SelectItem value="week">Woche</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
-
-        {/* Calendar Grid */}
-        <CalendarGrid
-          view={view}
-          currentDate={currentDate}
-          appointments={appointments}
-          holidays={holidays}
-          onAppointmentClick={handleAppointmentClick}
-          onTimeSlotClick={handleTimeSlotClick}
-        />
       </div>
 
-      {/* Holiday Impact Dialog */}
-      <HolidayImpactDialog
-        isOpen={impactDialog.isOpen}
-        onClose={() => setImpactDialog(prev => ({ ...prev, isOpen: false }))}
-        onStartRescheduling={handleStartRescheduling}
-        holidayTitle={impactDialog.holidayTitle}
-        totalConflicts={impactDialog.totalConflicts}
-        conflicts={impactDialog.conflicts}
+      {/* Calendar Controls */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 bg-white rounded-lg border border-slate-200">
+        {/* View Selector */}
+        <div className="flex items-center gap-2">
+          <Select value={view} onValueChange={(value: "day" | "week") => setView(value)}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="day">Tag</SelectItem>
+              <SelectItem value="week">Woche</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToPrevious}
+            className="p-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToToday}
+            className="flex items-center gap-2"
+          >
+            <Today className="h-4 w-4" />
+            <span className="hidden sm:inline">Heute</span>
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToNext}
+            className="p-2"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Current Date Display */}
+        <div className="text-center sm:text-right">
+          <div className="text-lg font-semibold text-slate-900">
+            {view === "day" 
+              ? format(currentDate, "EEEE, d. MMMM yyyy", { locale: de })
+              : `Woche ${format(currentDate, "d.", { locale: de })} - ${format(addDays(currentDate, 6), "d. MMMM yyyy", { locale: de })}`
+            }
+          </div>
+        </div>
+      </div>
+
+      {/* Calendar Grid */}
+      <CalendarGrid
+        view={view}
+        currentDate={currentDate}
+        appointments={appointments}
+        holidays={holidays}
+        onAppointmentClick={handleAppointmentClick}
+        onTimeSlotClick={handleTimeSlotClick}
+        className="min-h-[600px]"
       />
 
-      {/* Calendar Click Appointment Dialog */}
-      {appointmentDialog.isOpen && (
-        <AppointmentButton 
-          onAddAppointment={handleAddAppointment}
-          initialDate={appointmentDialog.initialDate}
-          initialTime={appointmentDialog.initialTime}
+      {/* Modals and Dialogs */}
+      {showHoursEditor && (
+        <HoursEditor
+          settings={settings}
+          onSave={(newSettings) => {
+            setSettings(newSettings)
+            setShowHoursEditor(false)
+            toast({
+              title: "Öffnungszeiten gespeichert",
+              description: "Die Öffnungszeiten wurden erfolgreich aktualisiert.",
+            })
+          }}
+          onCancel={() => setShowHoursEditor(false)}
+        />
+      )}
+
+      {showHolidayList && (
+        <HolidayList
+          holidays={holidays}
+          onHolidayAdd={(holiday) => {
+            setHolidays(prev => [...prev, { ...holiday, id: Date.now().toString() }])
+            setShowHolidayList(false)
+            toast({
+              title: "Feiertag hinzugefügt",
+              description: "Der Feiertag wurde erfolgreich hinzugefügt.",
+            })
+          }}
+          onHolidayEdit={(holiday) => {
+            setHolidays(prev => prev.map(h => h.id === holiday.id ? holiday : h))
+            setShowHolidayList(false)
+            toast({
+              title: "Feiertag bearbeitet",
+              description: "Der Feiertag wurde erfolgreich aktualisiert.",
+            })
+          }}
+          onHolidayDelete={(holidayId) => {
+            setHolidays(prev => prev.filter(h => h.id !== holidayId))
+            setShowHolidayList(false)
+            toast({
+              title: "Feiertag gelöscht",
+              description: "Der Feiertag wurde erfolgreich entfernt.",
+            })
+          }}
+          onClose={() => setShowHolidayList(false)}
+        />
+      )}
+
+      {showAppointmentButton && (
+        <AppointmentButton
+          onAppointmentCreate={handleAppointmentCreate}
+          onCancel={() => {
+            setShowAppointmentButton(false)
+            setSelectedTimeSlot(null)
+          }}
           autoOpen={true}
-          onClose={() => setAppointmentDialog({ isOpen: false })}
+          prefillDate={selectedTimeSlot?.date}
+          prefillHour={selectedTimeSlot?.hour}
         />
       )}
     </div>

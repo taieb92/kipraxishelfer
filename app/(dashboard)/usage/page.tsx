@@ -191,30 +191,33 @@ export default function UsagePage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="h-8 w-32 bg-slate-200 animate-pulse rounded" />
-            <div className="h-4 w-64 bg-slate-200 animate-pulse rounded mt-2" />
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+        {/* Header Skeleton */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-2">
+              <div className="h-8 w-32 bg-slate-200 animate-pulse rounded" />
+              <div className="h-4 w-64 bg-slate-200 animate-pulse rounded" />
+            </div>
+            <div className="h-10 w-48 bg-slate-200 animate-pulse rounded" />
           </div>
-          <div className="h-10 w-48 bg-slate-200 animate-pulse rounded" />
         </div>
         
-        {/* KPI Row */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* KPI Row Skeleton */}
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-24 bg-slate-200 animate-pulse rounded-2xl" />
+            <div key={i} className="h-24 bg-slate-200 animate-pulse rounded-xl" />
           ))}
         </div>
         
-        {/* Charts Row */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="h-80 bg-slate-200 animate-pulse rounded-2xl" />
-          <div className="h-80 bg-slate-200 animate-pulse rounded-2xl" />
+        {/* Charts Row Skeleton */}
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+          <div className="h-80 bg-slate-200 animate-pulse rounded-xl" />
+          <div className="h-80 bg-slate-200 animate-pulse rounded-xl" />
         </div>
         
-        {/* Table */}
-        <div className="h-96 bg-slate-200 animate-pulse rounded-2xl" />
+        {/* Table Skeleton */}
+        <div className="h-96 bg-slate-200 animate-pulse rounded-xl" />
       </div>
     )
   }
@@ -222,29 +225,32 @@ export default function UsagePage() {
   // Error state
   if (error || !data) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Usage</h1>
-            <p className="text-slate-600">Verbrauch und Abrechnungsdaten</p>
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Verbrauch</h1>
+              <p className="text-slate-600 mt-1">Verbrauch und Abrechnungsdaten</p>
+            </div>
+            <CycleSelector
+              currentCycle={cycle}
+              from={from}
+              to={to}
+              onChange={handleCycleChange}
+            />
           </div>
-          <CycleSelector
-            currentCycle={cycle}
-            from={from}
-            to={to}
-            onChange={handleCycleChange}
-          />
         </div>
         
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
+          <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <span>{error || 'Ein unbekannter Fehler ist aufgetreten.'}</span>
             <Button
               variant="outline"
               size="sm"
               onClick={handleRetry}
-              className="ml-4"
+              className="w-full sm:w-auto"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Wiederholen
@@ -258,18 +264,21 @@ export default function UsagePage() {
   // Empty state
   if (data.totals.callsTotal === 0) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Usage</h1>
-            <p className="text-slate-600">Verbrauch und Abrechnungsdaten</p>
+      <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Verbrauch</h1>
+              <p className="text-slate-600 mt-1">Verbrauch und Abrechnungsdaten</p>
+            </div>
+            <CycleSelector
+              currentCycle={cycle}
+              from={from}
+              to={to}
+              onChange={handleCycleChange}
+            />
           </div>
-          <CycleSelector
-            currentCycle={cycle}
-            from={from}
-            to={to}
-            onChange={handleCycleChange}
-          />
         </div>
         
         <Card className={cn(
@@ -290,32 +299,32 @@ export default function UsagePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Page Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Usage</h1>
-          <p className="text-slate-600">
-            Verbrauch und Abrechnungsdaten für {data.cycle.name}
-          </p>
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Verbrauch</h1>
+            <p className="text-slate-600 mt-1">
+              Verbrauch und Abrechnungsdaten für {data.cycle.name}
+            </p>
+          </div>
+          <CycleSelector
+            currentCycle={cycle}
+            from={from}
+            to={to}
+            onChange={handleCycleChange}
+          />
         </div>
-        <CycleSelector
-          currentCycle={cycle}
-          from={from}
-          to={to}
-          onChange={handleCycleChange}
-        />
       </div>
 
       {/* KPI Row */}
       <KpiGroup 
         data={data.totals}
-        showProjection={FEATURE_FLAGS.BILLING_ESTIMATE}
-        showAfterHours={FEATURE_FLAGS.AFTER_HOURS}
       />
 
       {/* Charts Row */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         <MinutesChart 
           data={data.charts.dailyMinutes}
           title="Abrechenbare Minuten pro Tag"
@@ -328,7 +337,7 @@ export default function UsagePage() {
       </div>
 
       {/* Breakdown Row */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         <CategoryBreakdown 
           data={data.charts.byCategory}
           title="Verteilung nach Kategorien"

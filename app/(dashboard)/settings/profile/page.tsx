@@ -239,273 +239,263 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Profil</h1>
-        <p className="text-slate-600">
-          Verwalten Sie Ihre persönlichen Einstellungen und Sicherheit
-        </p>
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Page Header */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Profil</h1>
+            <p className="text-slate-600 mt-1">
+              Persönliche Einstellungen und Passwort ändern
+            </p>
+          </div>
+          
+          {/* Action buttons - Responsive */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={logout}
+              className="w-full sm:w-auto"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Abmelden
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Profile Information */}
-        <Card className={cn(
-          "bg-gradient-to-b from-white to-slate-50",
-          "border-slate-200 shadow-md rounded-2xl"
-        )}>
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 border border-blue-200">
-                <User className="h-5 w-5 text-blue-600" />
+      {/* Profile Information */}
+      <Card className="bg-gradient-to-b from-white to-slate-50 border-slate-200 shadow-md rounded-2xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center space-x-2 text-slate-900">
+            <User className="h-5 w-5 text-blue-600" />
+            <span>Profilinformationen</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {isLoading ? (
+            <div className="space-y-4">
+              <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
+              <div className="h-4 w-48 bg-slate-200 rounded animate-pulse" />
+              <div className="h-4 w-40 bg-slate-200 rounded animate-pulse" />
+            </div>
+          ) : profile ? (
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
+              {/* Profile Display */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700">Name</Label>
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-slate-900 font-medium">{profile.name}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700">E-Mail</Label>
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-slate-900 font-medium">{profile.email}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700">Rolle</Label>
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-slate-900 font-medium">{profile.role}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700">Praxis</Label>
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-slate-900 font-medium">{profile.practiceName}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">Profil</h3>
-                <p className="text-sm text-slate-600">
-                  Persönliche Informationen
-                </p>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent className="space-y-4">
-            {/* Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-slate-900 font-medium">
-                Name *
-              </Label>
-              <Input
-                id="name"
-                value={profileForm.name}
-                onChange={(e) => {
-                  setProfileForm(prev => ({ ...prev, name: e.target.value }))
-                  setProfileErrors([])
-                }}
-                className={cn(
-                  "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2",
-                  profileErrors.some(e => e.includes("Name")) && "border-red-500"
-                )}
-                disabled={isSaving}
-              />
-            </div>
 
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-900 font-medium">
-                E-Mail *
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={profileForm.email}
-                onChange={(e) => {
-                  setProfileForm(prev => ({ ...prev, email: e.target.value }))
-                  setProfileErrors([])
-                }}
-                className={cn(
-                  "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2",
-                  profileErrors.some(e => e.includes("E-Mail")) && "border-red-500"
-                )}
-                disabled={isSaving}
-              />
-            </div>
+              {/* Profile Edit Form */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-slate-900">Bearbeiten</h3>
+                
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium text-slate-700">
+                      Name
+                    </Label>
+                    <Input
+                      id="name"
+                      value={profileForm.name}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Ihr Name"
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+                      E-Mail
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileForm.email}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="ihre.email@example.com"
+                      className="w-full"
+                    />
+                  </div>
+                </div>
 
-            {/* Role (Read-only) */}
-            <div className="space-y-2">
-              <Label className="text-slate-900 font-medium">
-                Rolle
-              </Label>
-              <Input
-                value={profile.role}
-                readOnly
-                className="bg-slate-50 text-slate-600"
-              />
-            </div>
-
-            {/* Practice Name (Read-only) */}
-            <div className="space-y-2">
-              <Label className="text-slate-900 font-medium">
-                Praxisname
-              </Label>
-              <Input
-                value={profile.practiceName}
-                readOnly
-                className="bg-slate-50 text-slate-600"
-              />
-            </div>
-
-            {/* Profile Validation Errors */}
-            {profileErrors.length > 0 && (
-              <div className="space-y-2">
-                {profileErrors.map((error, index) => (
-                  <Alert key={index} variant="destructive">
+                {profileErrors.length > 0 && (
+                  <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
+                    <AlertDescription>
+                      <ul className="list-disc list-inside space-y-1">
+                        {profileErrors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
                   </Alert>
-                ))}
-              </div>
-            )}
+                )}
 
-            {/* Profile Actions */}
-            <div className="flex justify-between pt-4 border-t border-slate-200">
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                className="focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Abmelden
-              </Button>
-              
-              <Button
-                onClick={handleProfileSave}
-                disabled={isSaving}
-                className={cn(
-                  "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800",
-                  "text-white shadow-md",
-                  "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                )}
-              >
-                {isSaving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Speichern...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Speichern
-                  </>
-                )}
-              </Button>
+                <Button
+                  onClick={handleProfileSave}
+                  disabled={isSaving}
+                  className="w-full sm:w-auto"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? "Speichern..." : "Speichern"}
+                </Button>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Password Change */}
-        <Card className={cn(
-          "bg-gradient-to-b from-white to-slate-50",
-          "border-slate-200 shadow-md rounded-2xl"
-        )}>
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 border border-amber-200">
-                <Lock className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">Passwort ändern</h3>
-                <p className="text-sm text-slate-600">
-                  Sicherheit Ihres Kontos
-                </p>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent className="space-y-4">
-            {/* Current Password */}
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword" className="text-slate-900 font-medium">
-                Aktuelles Passwort *
-              </Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(e) => {
-                  setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))
-                  setPasswordErrors([])
-                }}
-                className={cn(
-                  "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2",
-                  passwordErrors.some(e => e.includes("Aktuelles")) && "border-red-500"
-                )}
-                disabled={isChangingPassword}
-              />
-            </div>
-
-            {/* New Password */}
-            <div className="space-y-2">
-              <Label htmlFor="newPassword" className="text-slate-900 font-medium">
-                Neues Passwort *
-              </Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={passwordForm.newPassword}
-                onChange={(e) => {
-                  setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))
-                  setPasswordErrors([])
-                }}
-                className={cn(
-                  "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2",
-                  passwordErrors.some(e => e.includes("Neues Passwort")) && "border-red-500"
-                )}
-                disabled={isChangingPassword}
-              />
-              <p className="text-xs text-slate-500">
-                Mindestens 10 Zeichen erforderlich
+          ) : (
+            <div className="text-center py-8">
+              <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                Profil konnte nicht geladen werden
+              </h3>
+              <p className="text-slate-600">
+                Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.
               </p>
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            {/* Confirm Password */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-slate-900 font-medium">
-                Neues Passwort wiederholen *
-              </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={passwordForm.confirmPassword}
-                onChange={(e) => {
-                  setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))
-                  setPasswordErrors([])
-                }}
-                className={cn(
-                  "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2",
-                  passwordErrors.some(e => e.includes("überein")) && "border-red-500"
-                )}
-                disabled={isChangingPassword}
-              />
-            </div>
-
-            {/* Password Validation Errors */}
-            {passwordErrors.length > 0 && (
-              <div className="space-y-2">
-                {passwordErrors.map((error, index) => (
-                  <Alert key={index} variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                ))}
+      {/* Password Change */}
+      <Card className="bg-gradient-to-b from-white to-slate-50 border-slate-200 shadow-md rounded-2xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center space-x-2 text-slate-900">
+            <Lock className="h-5 w-5 text-green-600" />
+            <span>Passwort ändern</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
+            {/* Password Form */}
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword" className="text-sm font-medium text-slate-700">
+                    Aktuelles Passwort
+                  </Label>
+                  <Input
+                    id="currentPassword"
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    placeholder="Aktuelles Passwort"
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword" className="text-sm font-medium text-slate-700">
+                    Neues Passwort
+                  </Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                    placeholder="Neues Passwort"
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">
+                    Neues Passwort bestätigen
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    placeholder="Neues Passwort wiederholen"
+                    className="w-full"
+                  />
+                </div>
               </div>
-            )}
 
-            {/* Password Actions */}
-            <div className="flex justify-end pt-4 border-t border-slate-200">
+              {passwordErrors.length > 0 && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <ul className="list-disc list-inside space-y-1">
+                      {passwordErrors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <Button
                 onClick={handlePasswordChange}
-                disabled={isChangingPassword || !passwordForm.currentPassword || !passwordForm.newPassword}
-                className={cn(
-                  "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800",
-                  "text-white shadow-md",
-                  "focus:ring-2 focus:ring-amber-400 focus:ring-offset-2"
-                )}
+                disabled={isChangingPassword}
+                className="w-full sm:w-auto"
               >
-                {isChangingPassword ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Ändern...
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-4 w-4 mr-2" />
-                    Passwort ändern
-                  </>
-                )}
+                <Lock className="h-4 w-4 mr-2" />
+                {isChangingPassword ? "Ändern..." : "Passwort ändern"}
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            {/* Password Requirements */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-900">Passwort-Anforderungen</h3>
+              
+              <div className="space-y-3 text-sm text-slate-600">
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-slate-300 rounded-full mt-2 flex-shrink-0" />
+                  <span>Mindestens 8 Zeichen</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-slate-300 rounded-full mt-2 flex-shrink-0" />
+                  <span>Groß- und Kleinbuchstaben</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-slate-300 rounded-full mt-2 flex-shrink-0" />
+                  <span>Zahlen und Sonderzeichen</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-slate-300 rounded-full mt-2 flex-shrink-0" />
+                  <span>Nicht das aktuelle Passwort</span>
+                </div>
+              </div>
+              
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-medium text-blue-900 mb-2">Sicherheitstipp</h4>
+                <p className="text-sm text-blue-800">
+                  Verwenden Sie ein einzigartiges Passwort, das Sie nirgendwo anders verwenden. 
+                  Ein Passwort-Manager kann Ihnen dabei helfen, sichere Passwörter zu generieren und zu speichern.
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 } 

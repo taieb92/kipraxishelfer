@@ -65,10 +65,10 @@ export function CycleSelector({ currentCycle, from, to, onChange }: CycleSelecto
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
       <Select value={currentCycle} onValueChange={handleCycleChange}>
         <SelectTrigger className={cn(
-          "w-48",
+          "w-full sm:w-48",
           // Design System: focus ring
           "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
         )}>
@@ -100,97 +100,48 @@ export function CycleSelector({ currentCycle, from, to, onChange }: CycleSelecto
         <PopoverContent className="w-auto p-0" align="end">
           <div className="p-4 space-y-4">
             <div className="space-y-2">
-              <h4 className="font-medium text-slate-900">Zeitraum auswählen</h4>
+              <h4 className="font-medium text-slate-900">Benutzerdefinierter Zeitraum</h4>
               <p className="text-sm text-slate-600">
-                Wählen Sie Start- und Enddatum für den benutzerdefinierten Zeitraum.
+                Wählen Sie Start- und Enddatum aus
               </p>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            
+            <div className="grid gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-900">Von</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !customFrom && "text-slate-500",
-                        // Design System: focus ring
-                        "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {customFrom ? format(customFrom, "dd.MM.yyyy", { locale: de }) : "Datum wählen"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={customFrom}
-                      onSelect={setCustomFrom}
-                      initialFocus
-                      locale={de}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <label className="text-sm font-medium text-slate-700">Von</label>
+                <Calendar
+                  mode="single"
+                  selected={customFrom}
+                  onSelect={setCustomFrom}
+                  className="rounded-md border"
+                />
               </div>
-
+              
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-900">Bis</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !customTo && "text-slate-500",
-                        // Design System: focus ring
-                        "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {customTo ? format(customTo, "dd.MM.yyyy", { locale: de }) : "Datum wählen"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={customTo}
-                      onSelect={setCustomTo}
-                      initialFocus
-                      locale={de}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <label className="text-sm font-medium text-slate-700">Bis</label>
+                <Calendar
+                  mode="single"
+                  selected={customTo}
+                  onSelect={setCustomTo}
+                  className="rounded-md border"
+                />
               </div>
             </div>
-
-            <div className="flex justify-end space-x-2 pt-4 border-t border-slate-200">
+            
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsCustomOpen(false)}
-                className={cn(
-                  // Design System: focus ring
-                  "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                )}
-              >
-                Abbrechen
-              </Button>
-              <Button
-                size="sm"
                 onClick={handleCustomApply}
                 disabled={!customFrom || !customTo}
-                className={cn(
-                  // Design System: medical gradient on primary actions
-                  "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800",
-                  "text-white shadow-md",
-                  // Design System: focus ring
-                  "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                )}
+                className="flex-1 sm:flex-none"
               >
                 Anwenden
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsCustomOpen(false)}
+                className="flex-1 sm:flex-none"
+              >
+                Abbrechen
               </Button>
             </div>
           </div>

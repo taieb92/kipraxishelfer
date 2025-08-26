@@ -193,179 +193,217 @@ export default function GreetingSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Begrüßung</h1>
-        <p className="text-slate-600">
-          Konfigurieren Sie die Begrüßung für eingehende Anrufe
-        </p>
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Page Header */}
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Begrüßung & Einverständnis</h1>
+          <p className="text-slate-600 mt-1">
+            Konfigurieren Sie die automatische Begrüßung für eingehende Anrufe
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-6 max-w-4xl">
-        {/* Greeting Text */}
-        <Card className={cn(
-          // Design System: card gradient background
-          "bg-gradient-to-b from-white to-slate-50",
-          // Design System: border and shadow
-          "border-slate-200 shadow-md rounded-2xl"
-        )}>
+      {/* Main Content */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {/* Greeting Settings */}
+        <Card className="bg-gradient-to-b from-white to-slate-50 border-slate-200 shadow-md rounded-2xl">
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 border border-blue-200">
-                <MessageSquare className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">Begrüßungstext</h3>
-                <p className="text-sm text-slate-600">
-                  Text, der bei eingehenden Anrufen abgespielt wird
-                </p>
-              </div>
+            <CardTitle className="flex items-center space-x-2 text-slate-900">
+              <MessageSquare className="h-5 w-5 text-blue-600" />
+              <span>Begrüßungstext</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="greeting" className="text-slate-900 font-medium">
-                Begrüßungstext *
-              </Label>
-              <Textarea
-                id="greeting"
-                value={settings.text}
-                onChange={(e) => handleTextChange(e.target.value)}
-                placeholder="Geben Sie Ihren Begrüßungstext ein..."
-                className={cn(
-                  "min-h-[120px]",
-                  // Design System: focus ring
-                  "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2",
-                  validationErrors.some(e => !e.startsWith("Tipp:")) && "border-red-500"
-                )}
-                maxLength={320}
-              />
-              <div className="flex justify-between items-center">
-                <p className="text-xs text-slate-500">
-                  Verwenden Sie {"{Praxisname}"} als Platzhalter für den Namen Ihrer Praxis
-                </p>
-                <span className="text-xs text-slate-500">
-                  {settings.text.length}/320
-                </span>
+          <CardContent className="space-y-6">
+            {isLoading ? (
+              <div className="space-y-4">
+                <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
+                <div className="h-32 bg-slate-200 rounded animate-pulse" />
+                <div className="h-4 w-48 bg-slate-200 rounded animate-pulse" />
               </div>
-            </div>
-
-            {/* Validation Errors */}
-            {validationErrors.length > 0 && (
-              <div className="space-y-2">
-                {validationErrors.map((error, index) => (
-                  <Alert key={index} variant={error.startsWith("Tipp:") ? "default" : "destructive"}>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={handlePlayPreview}
-                disabled={!settings.text.trim() || validationErrors.some(e => !e.startsWith("Tipp:"))}
-                className={cn(
-                  "flex items-center gap-2",
-                  // Design System: focus ring
-                  "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                )}
-              >
-                {isPlaying ? (
-                  <>
-                    <Pause className="h-4 w-4" />
-                    Stoppen
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4" />
-                    Vorschau anhören
-                  </>
-                )}
-              </Button>
-              
-              {isPlaying && (
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <Volume2 className="h-4 w-4 animate-pulse" />
-                  Begrüßung wird abgespielt...
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Voice Settings */}
-        <Card className={cn(
-          // Design System: card gradient background
-          "bg-gradient-to-b from-white to-slate-50",
-          // Design System: border and shadow
-          "border-slate-200 shadow-md rounded-2xl"
-        )}>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-slate-900">
-              Stimme
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Label className="text-slate-900 font-medium">Geschlecht der Stimme *</Label>
-              <RadioGroup 
-                value={settings.voice} 
-                onValueChange={handleVoiceChange}
-                className="flex gap-6"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem 
-                    value="female" 
-                    id="female"
-                    className="focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                  />
-                  <Label htmlFor="female" className="text-slate-700 cursor-pointer">
-                    Weiblich
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem 
-                    value="male" 
-                    id="male"
-                    className="focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                  />
-                  <Label htmlFor="male" className="text-slate-700 cursor-pointer">
-                    Männlich
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <Button 
-            onClick={handleSave} 
-            disabled={isSaving || validationErrors.some(e => !e.startsWith("Tipp:"))}
-            className={cn(
-              // Design System: medical gradient on primary actions
-              "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800",
-              "text-white shadow-md",
-              // Design System: focus ring
-              "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-            )}
-          >
-            {isSaving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Speichern...
-              </>
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" />
-                Einstellungen speichern
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="greetingText" className="text-sm font-medium text-slate-700">
+                      Begrüßungstext
+                    </Label>
+                    <Textarea
+                      id="greetingText"
+                      value={settings.text}
+                      onChange={(e) => handleTextChange(e.target.value)}
+                      placeholder="Geben Sie den Begrüßungstext ein..."
+                      className="min-h-[120px] resize-none"
+                      disabled={isSaving}
+                    />
+                    <div className="flex justify-between text-xs text-slate-500">
+                      <span>
+                        {settings.text.length}/320 Zeichen
+                      </span>
+                      <span>
+                        {settings.text.length < 10 ? "Mindestens 10 Zeichen erforderlich" : "✓"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-slate-700">
+                      Stimme
+                    </Label>
+                    <RadioGroup
+                      value={settings.voice}
+                      onValueChange={(value: 'female' | 'male') => handleVoiceChange(value)}
+                      disabled={isSaving}
+                      className="grid grid-cols-2 gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="female" id="female" />
+                        <Label htmlFor="female" className="text-sm font-medium text-slate-700">
+                          Weiblich
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="male" id="male" />
+                        <Label htmlFor="male" className="text-sm font-medium text-slate-700">
+                          Männlich
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </div>
+
+                {validationErrors.length > 0 && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <ul className="list-disc list-inside space-y-1">
+                        {validationErrors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-200">
+                  <Button
+                    onClick={handleSave}
+                    disabled={isSaving || validationErrors.length > 0}
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSaving ? "Speichern..." : "Speichern"}
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={handlePlayPreview}
+                    disabled={isSaving || !settings.text.trim()}
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Vorschau
+                  </Button>
+                </div>
               </>
             )}
-          </Button>
+          </CardContent>
+        </Card>
+
+        {/* Preview and Help */}
+        <div className="space-y-6">
+          {/* Audio Preview */}
+          <Card className="bg-gradient-to-b from-white to-slate-50 border-slate-200 shadow-md rounded-2xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-2 text-slate-900">
+                <Volume2 className="h-5 w-5 text-green-600" />
+                <span>Audio-Vorschau</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <p className="text-sm text-slate-600 mb-3">
+                  Hören Sie sich den aktuellen Begrüßungstext an:
+                </p>
+                
+                {audioElement && (
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePlayPreview}
+                      disabled={!settings.text.trim()}
+                      className="flex items-center gap-2"
+                    >
+                      {isPlaying ? (
+                        <>
+                          <Pause className="h-4 w-4" />
+                          Pause
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4" />
+                          Abspielen
+                        </>
+                      )}
+                    </Button>
+                    
+                    <div className="text-xs text-slate-500">
+                      {isPlaying ? "Wird abgespielt..." : "Bereit"}
+                    </div>
+                  </div>
+                )}
+                
+                {!audioElement && (
+                  <div className="text-sm text-slate-500 italic">
+                    Klicken Sie auf "Vorschau" um den Audio-Player zu laden
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Help and Guidelines */}
+          <Card className="bg-gradient-to-b from-white to-slate-50 border-slate-200 shadow-md rounded-2xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-slate-900">
+                Richtlinien & Tipps
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3 text-sm text-slate-600">
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
+                  <span>Begrüßen Sie den Anrufer freundlich und professionell</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
+                  <span>Erklären Sie den Zweck der Aufzeichnung klar und verständlich</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
+                  <span>Fügen Sie wichtige Informationen wie Notfallnummern hinzu</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
+                  <span>Halten Sie den Text kurz und prägnant (max. 320 Zeichen)</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0" />
+                  <span>Testen Sie die Vorschau vor dem Speichern</span>
+                </div>
+              </div>
+              
+              <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <h4 className="font-medium text-amber-900 mb-2">Wichtiger Hinweis</h4>
+                <p className="text-sm text-amber-800">
+                  Der Begrüßungstext wird bei jedem eingehenden Anruf abgespielt. 
+                  Stellen Sie sicher, dass alle rechtlichen Anforderungen erfüllt sind 
+                  und der Text für Ihre Patienten verständlich ist.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
