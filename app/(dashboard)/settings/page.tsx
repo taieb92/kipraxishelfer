@@ -2,121 +2,146 @@
 
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, MessageSquare, Users, CheckCircle, AlertCircle, ChevronRight, Tags, User, Shield } from "lucide-react"
+import { cn } from "@/lib/utils"
+import {
+  Shield,
+  MessageSquare,
+  Tags,
+  Users,
+  User,
+  Settings as SettingsIcon,
+} from "lucide-react"
 
-// Mock connection statuses
-const connectionStatuses = {
-  doctolib: { connected: true, lastSync: "2024-01-15T10:30:00Z" },
-  greeting: { configured: true },
-  calendar: { configured: true, hoursSet: true },
-  users: { count: 3 },
-}
+const settingsCards = [
+  {
+    title: "Doctolib",
+    description: "Integration mit Doctolib für Terminverwaltung",
+    href: "/settings/doctolib",
+    icon: Shield,
+    badge: "Integration",
+    className: "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200"
+  },
+  {
+    title: "Begrüßung",
+    description: "KI-Begrüßung und Stimmeinstellungen konfigurieren",
+    href: "/settings/greeting",
+    icon: MessageSquare,
+    badge: "KI",
+    className: "bg-gradient-to-br from-green-50 to-green-100 border-green-200"
+  },
+  {
+    title: "Kategorien & Status",
+    description: "Anrufkategorien und Status verwalten",
+    href: "/settings/categories-statuses",
+    icon: Tags,
+    badge: "Verwaltung",
+    className: "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200"
+  },
+  {
+    title: "Nutzer",
+    description: "Benutzer und Berechtigungen verwalten",
+    href: "/settings/users",
+    icon: Users,
+    badge: "Admin",
+    className: "bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"
+  },
+  {
+    title: "Profil",
+    description: "Persönliche Einstellungen und Passwort ändern",
+    href: "/settings/profile",
+    icon: User,
+    badge: "Persönlich",
+    className: "bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200"
+  },
+]
 
 export default function SettingsPage() {
-  const settingsCards = [
-    {
-      title: "Doctolib Integration",
-      description: "Verbinden Sie Ihr Doctolib-Konto für automatische Terminbuchungen",
-      href: "/settings/doctolib",
-      icon: Shield,
-      status: connectionStatuses.doctolib.connected ? "connected" : "disconnected",
-      statusText: connectionStatuses.doctolib.connected ? "Verbunden" : "Nicht verbunden",
-    },
-    {
-      title: "Begrüßung",
-      description: "Konfigurieren Sie die Begrüßungsnachricht und Stimme",
-      href: "/settings/greeting",
-      icon: MessageSquare,
-      status: connectionStatuses.greeting.configured ? "configured" : "needs-setup",
-      statusText: connectionStatuses.greeting.configured ? "Konfiguriert" : "Einrichtung erforderlich",
-    },
-    {
-      title: "Kategorien & Status",
-      description: "Verwalten Sie Anruf-Kategorien und Status-Definitionen",
-      href: "/settings/categories-statuses",
-      icon: Tags,
-      status: "configured",
-      statusText: "Konfiguriert",
-    },
-    {
-      title: "Nutzer",
-      description: "Verwalten Sie Benutzerkonten und Berechtigungen",
-      href: "/settings/users",
-      icon: Users,
-      status: "configured",
-      statusText: `${connectionStatuses.users.count} Benutzer`,
-    },
-    {
-      title: "Profil",
-      description: "Persönliche Einstellungen und Sicherheit",
-      href: "/settings/profile",
-      icon: User,
-      status: "configured",
-      statusText: "Konfiguriert",
-    },
-  ]
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "connected":
-      case "configured":
-        return <CheckCircle className="h-3 w-3" />
-      case "disconnected":
-      case "needs-setup":
-        return <AlertCircle className="h-3 w-3" />
-      default:
-        return <AlertCircle className="h-3 w-3" />
-    }
-  }
-
-  const getStatusBadge = (status: string, statusText: string) => {
-    const isPositive = status === "connected" || status === "configured"
-    const className = isPositive ? "status-success" : "status-warning"
-    
-    return (
-      <Badge className={`gap-1 ${className}`}>
-        {getStatusIcon(status)}
-        {statusText}
-      </Badge>
-    )
-  }
-
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Einstellungen</h1>
-        <p className="text-slate-600">Konfigurieren Sie Ihre kipraxishelfer-Installation und Integrationen</p>
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Header */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 border border-blue-200">
+            <SettingsIcon className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              Einstellungen
+            </h1>
+            <p className="text-slate-600 mt-1">
+              Konfigurieren Sie Ihre Praxis-Einstellungen und Integrationen
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* Settings Grid - Responsive */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {settingsCards.map((card) => (
-          <Card key={card.href} className="card-elevated card-hover group">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <card.icon className="h-6 w-6 text-primary" />
+          <Link key={card.href} href={card.href}>
+            <Card className={cn(
+              "bg-gradient-to-b from-white to-slate-50",
+              "border-slate-200 shadow-md rounded-2xl",
+              "transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5",
+              "cursor-pointer group",
+              card.className
+            )}>
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between">
+                  <div className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-xl",
+                    "bg-white/80 border border-white/60",
+                    "group-hover:scale-110 transition-transform duration-200"
+                  )}>
+                    <card.icon className="h-6 w-6 text-slate-600" />
                   </div>
-                  <div>
-                    <CardTitle className="text-lg group-hover:text-primary transition-colors">{card.title}</CardTitle>
-                  </div>
+                  
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs bg-white/80 border-white/60 text-slate-600"
+                  >
+                    {card.badge}
+                  </Badge>
                 </div>
-                {getStatusBadge(card.status, card.statusText)}
-              </div>
-              <CardDescription className="mt-2">{card.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="outline" className="w-full justify-between hover:bg-primary/5 hover:border-primary/30">
-                <Link href={card.href}>
-                  Konfigurieren
-                  <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              
+              <CardContent className="space-y-2">
+                <CardTitle className="text-lg text-slate-900 group-hover:text-slate-700 transition-colors">
+                  {card.title}
+                </CardTitle>
+                <CardDescription className="text-slate-600 text-sm leading-relaxed">
+                  {card.description}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
+      </div>
+
+      {/* Additional Info */}
+      <div className="max-w-2xl">
+        <Card className="bg-gradient-to-b from-slate-50 to-white border-slate-200">
+          <CardContent className="pt-6">
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-slate-900">
+                Über kipraxishelfer
+              </h3>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                kipraxishelfer ist ein KI-gestützter Sprachassistent, der Ihre Praxis bei der 
+                Anrufverwaltung unterstützt. Alle Einstellungen werden sicher gespeichert und 
+                können jederzeit angepasst werden.
+              </p>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <span>Version 1.0.0</span>
+                <span>•</span>
+                <span>Deutsche Lokalisierung</span>
+                <span>•</span>
+                <span>DSGVO-konform</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

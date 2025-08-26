@@ -20,6 +20,7 @@ import {
   Shield,
   Tags,
   User,
+  X,
 } from "lucide-react"
 
 const navigation = [
@@ -85,119 +86,120 @@ const settingsNavigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith("/settings"))
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r border-slate-200">
-      {/* Header Space - Logo is now in topbar */}
-      <div className="h-16 border-b border-slate-200" />
+    <div className="flex h-full w-full flex-col bg-white border-r border-slate-200">
+      {/* Header - Responsive */}
+      <div className="flex h-16 items-center justify-between px-4 sm:px-6 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <img 
+            src="/brand/kipraxishelfer-logo.svg" 
+            alt="kipraxishelfer" 
+            className="h-6 w-auto sm:h-8"
+          />
+          <span className="hidden lg:block text-lg font-semibold text-slate-900">
+            kipraxishelfer
+          </span>
+        </div>
+      </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-2 p-4">
+      <nav className="flex-1 space-y-1 px-3 py-4">
         {/* Main Navigation */}
         <div className="space-y-1">
           {navigation.map((item) => {
             const isActive = pathname === item.href
-            
             return (
               <Link
-                key={item.href}
+                key={item.name}
                 href={item.href}
                 className={cn(
-                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-                  "hover:bg-slate-50",
+                  "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  "hover:bg-slate-100 hover:text-slate-900",
                   isActive 
-                    ? "bg-blue-50 text-blue-700 border border-blue-200" 
-                    : "text-slate-700 hover:text-slate-900"
+                    ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600" 
+                    : "text-slate-600"
                 )}
               >
-                <div className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-                  isActive ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
-                )}>
-                  <item.icon className="h-4 w-4" />
-                </div>
+                <item.icon className={cn(
+                  "mr-3 h-4 w-4 flex-shrink-0",
+                  isActive ? "text-blue-600" : "text-slate-400 group-hover:text-slate-500"
+                )} />
                 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate">{item.name}</span>
-                    {item.badge && (
-                      <Badge 
-                        variant="secondary" 
-                        className="h-5 min-w-[20px] text-xs bg-red-100 text-red-700 border-red-200"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-xs text-slate-500 truncate">
-                    {item.description}
-                  </div>
-                </div>
+                <span className="flex-1 min-w-0">
+                  <span className="truncate">{item.name}</span>
+                  {item.description && (
+                    <span className="hidden lg:block text-xs text-slate-500 mt-0.5">
+                      {item.description}
+                    </span>
+                  )}
+                </span>
+                
+                {item.badge && (
+                  <Badge 
+                    variant="secondary" 
+                    className="ml-auto flex-shrink-0 text-xs"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
               </Link>
             )
           })}
         </div>
 
-        {/* Settings Section */}
-        <div className="pt-4">
+        {/* Settings Section - Collapsible */}
+        <div className="pt-4 border-t border-slate-200">
           <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
             <CollapsibleTrigger asChild>
               <Button
                 variant="ghost"
                 className={cn(
-                  "w-full justify-start gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
-                  "hover:bg-slate-50 text-slate-700 hover:text-slate-900"
+                  "w-full justify-between px-3 py-2 text-sm font-medium text-slate-600",
+                  "hover:bg-slate-100 hover:text-slate-900 data-[state=open]:bg-slate-100"
                 )}
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-                  <Settings className="h-4 w-4" />
+                <div className="flex items-center">
+                  <Settings className="mr-3 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Einstellungen</span>
                 </div>
-                
-                <div className="flex-1 text-left">
-                  <div>Einstellungen</div>
-                  <div className="text-xs text-slate-500">
-                    Konfiguration
-                  </div>
-                </div>
-                
                 {settingsOpen ? (
-                  <ChevronDown className="h-4 w-4 text-slate-400" />
+                  <ChevronDown className="h-4 w-4 flex-shrink-0" />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-slate-400" />
+                  <ChevronRight className="h-4 w-4 flex-shrink-0" />
                 )}
               </Button>
             </CollapsibleTrigger>
-
-            <CollapsibleContent className="space-y-1 pl-4 pt-2">
+            
+            <CollapsibleContent className="space-y-1 mt-1">
               {settingsNavigation.map((item) => {
                 const isActive = pathname === item.href
-                
                 return (
                   <Link
-                    key={item.href}
+                    key={item.name}
                     href={item.href}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
-                      "hover:bg-slate-50",
+                      "group flex items-center px-3 py-2 pl-9 text-sm font-medium rounded-md transition-colors",
+                      "hover:bg-slate-100 hover:text-slate-900",
                       isActive 
-                        ? "bg-blue-50 text-blue-700 border border-blue-200" 
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600" 
+                        : "text-slate-600"
                     )}
                   >
-                    <div className={cn(
-                      "flex h-6 w-6 items-center justify-center rounded-md transition-colors",
-                      isActive ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
-                    )}>
-                      <item.icon className="h-3 w-3" />
-                    </div>
+                    <item.icon className={cn(
+                      "mr-3 h-4 w-4 flex-shrink-0",
+                      isActive ? "text-blue-600" : "text-slate-400 group-hover:text-slate-500"
+                    )} />
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate">{item.name}</div>
-                      <div className="text-xs text-slate-400 truncate">
-                        {item.description}
-                      </div>
-                    </div>
+                    <span className="flex-1 min-w-0">
+                      <span className="truncate">{item.name}</span>
+                      {item.description && (
+                        <span className="hidden lg:block text-xs text-slate-500 mt-0.5">
+                          {item.description}
+                        </span>
+                      )}
+                    </span>
                   </Link>
                 )
               })}
@@ -206,10 +208,16 @@ export function Sidebar() {
         </div>
       </nav>
 
-      {/* Footer */}
+      {/* Footer - Responsive */}
       <div className="border-t border-slate-200 p-4">
         <div className="text-xs text-slate-500 text-center">
-          kipraxishelfer v1.0
+          <div className="hidden sm:block">
+            <div className="font-medium text-slate-700">kipraxishelfer</div>
+            <div>Version 1.0.0</div>
+          </div>
+          <div className="sm:hidden">
+            <div className="font-medium text-slate-700">v1.0.0</div>
+          </div>
         </div>
       </div>
     </div>

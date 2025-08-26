@@ -105,232 +105,229 @@ export function CalendarGrid({
   onTimeSlotClick,
   className 
 }: CalendarGridProps) {
-  const dates = view === "week" ? getWeekDates(currentDate) : [currentDate]
+  const weekDates = getWeekDates(currentDate)
 
-  const renderHolidayTooltip = (holiday: Holiday) => {
-    const startDate = parseISO(holiday.startISO)
-    const endDate = holiday.endISO ? parseISO(holiday.endISO) : startDate
-    
-    let dateRange = format(startDate, "dd.MM.yyyy", { locale: de })
-    if (holiday.endISO && holiday.startISO !== holiday.endISO) {
-      dateRange += ` - ${format(endDate, "dd.MM.yyyy", { locale: de })}`
-    }
-
+  if (view === "day") {
     return (
-      <div className="space-y-1">
-        <div className="font-medium">{holiday.note || "Feiertag"}</div>
-        <div className="text-xs">{dateRange}</div>
+      <div className={cn("bg-white rounded-lg border border-slate-200 overflow-hidden", className)}>
+        {/* Day Header */}
+        <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+          <h3 className="text-lg font-semibold text-slate-900">
+            {format(currentDate, "EEEE, d. MMMM yyyy", { locale: de })}
+          </h3>
+        </div>
+
+        {/* Time Grid */}
+        <div className="overflow-x-auto">
+          <div className="min-w-[600px] sm:min-w-0">
+            {timeSlots.map((time, hour) => {
+              const slotAppointments = getAppointmentsForTimeSlot(currentDate, hour, appointments)
+              const holiday = getHolidayForDate(currentDate, holidays)
+              const isBusinessHour = hour >= 8 && hour <= 18
+              
+              return (
+                <div 
+                  key={hour}
+                  className={cn(
+                    "grid grid-cols-1 border-b border-slate-100 min-h-[60px] sm:min-h-[80px]",
+                    "hover:bg-slate-50 transition-colors cursor-pointer",
+                    holiday && "bg-red-50",
+                    !isBusinessHour && "bg-slate-50"
+                  )}
+                  onClick={() => onTimeSlotClick?.(currentDate, hour)}
+                >
+                  {/* Time Label */}
+                  <div className="flex items-center px-3 py-2 border-r border-slate-200 bg-slate-50">
+                    <span className="text-sm font-medium text-slate-600 w-16 flex-shrink-0">
+                      {time}
+                    </span>
+                  </div>
+
+                  {/* Content Area */}
+                  <div className="px-3 py-2 relative">
+                    {holiday && (
+                      <div className="absolute inset-0 bg-red-100 border-l-4 border-red-500 rounded-r-md flex items-center px-3">
+                        <span className="text-sm font-medium text-red-800">
+                          {holiday.note || "Feiertag"}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {slotAppointments.map((apt) => (
+                      <div
+                        key={apt.id}
+                        className={cn(
+                          "mb-2 p-2 rounded-md border cursor-pointer transition-all",
+                          "hover:shadow-md hover:-translate-y-0.5",
+                          apt.source === "doctolib" 
+                            ? "bg-blue-50 border-blue-200 hover:bg-blue-100" 
+                            : "bg-green-50 border-green-200 hover:bg-green-100"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onAppointmentClick?.(apt)
+                        }}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-slate-900 text-sm truncate">
+                              {apt.title}
+                            </p>
+                            {apt.patientName && (
+                              <p className="text-xs text-slate-600 truncate">
+                                {apt.patientName}
+                              </p>
+                            )}
+                            {apt.service && (
+                              <p className="text-xs text-slate-500 truncate">
+                                {apt.service}
+                              </p>
+                            )}
+                          </div>
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "text-xs flex-shrink-0",
+                              apt.source === "doctolib" 
+                                ? "bg-blue-100 text-blue-700 border-blue-200" 
+                                : "bg-green-100 text-green-700 border-green-200"
+                            )}
+                          >
+                            {apt.source === "doctolib" ? "Doctolib" : "Termin"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     )
   }
 
-  const handleTimeSlotClick = (date: Date, hour: number, hasAppointments: boolean) => {
-    // Only allow clicking on empty time slots
-    if (!hasAppointments && onTimeSlotClick) {
-      onTimeSlotClick(date, hour)
-    }
-  }
-
+  // Week view
   return (
-    <TooltipProvider>
-      <div className={cn("flex-1 overflow-auto", className)}>
-        <div className="min-w-full">
-          {/* Header */}
-          <div className="sticky top-0 z-10 bg-background border-b">
-            <div className="grid grid-cols-[60px_1fr] gap-0">
-              <div className="border-r bg-muted/50" />
-              <div className={cn("grid gap-0", view === "week" ? "grid-cols-7" : "grid-cols-1")}>
-                {dates.map((date, i) => {
+    <div className={cn("bg-white rounded-lg border border-slate-200 overflow-hidden", className)}>
+      {/* Week Header */}
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+        <h3 className="text-lg font-semibold text-slate-900">
+          Woche {format(weekDates[0], "d.", { locale: de })} - {format(weekDates[6], "d. MMMM yyyy", { locale: de })}
+        </h3>
+      </div>
+
+      {/* Week Grid */}
+      <div className="overflow-x-auto">
+        <div className="min-w-[800px] sm:min-w-0">
+          {/* Day Headers */}
+          <div className="grid grid-cols-8 border-b border-slate-200">
+            <div className="p-3 bg-slate-50 border-r border-slate-200" />
+            {weekDates.map((date, index) => {
+              const holiday = getHolidayForDate(date, holidays)
+              const isToday = isSameDay(date, new Date())
+              
+              return (
+                <div 
+                  key={index}
+                  className={cn(
+                    "p-3 text-center border-r border-slate-200",
+                    holiday ? "bg-red-50" : "bg-slate-50",
+                    isToday && "bg-blue-50 border-blue-200"
+                  )}
+                >
+                  <div className="text-sm font-medium text-slate-900">
+                    {weekDays[index]}
+                  </div>
+                  <div className={cn(
+                    "text-lg font-bold mt-1",
+                    holiday ? "text-red-700" : isToday ? "text-blue-700" : "text-slate-700"
+                  )}>
+                    {format(date, "d", { locale: de })}
+                  </div>
+                  {holiday && (
+                    <div className="text-xs text-red-600 mt-1 truncate">
+                      {holiday.note || "Feiertag"}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Time Slots */}
+          {timeSlots.map((time, hour) => {
+            const isBusinessHour = hour >= 8 && hour <= 18
+            
+            return (
+              <div 
+                key={hour}
+                className={cn(
+                  "grid grid-cols-8 border-b border-slate-100 min-h-[60px] sm:min-h-[80px]",
+                  !isBusinessHour && "bg-slate-50"
+                )}
+              >
+                {/* Time Label */}
+                <div className="flex items-center px-3 py-2 border-r border-slate-200 bg-slate-50">
+                  <span className="text-sm font-medium text-slate-600 w-16 flex-shrink-0">
+                    {time}
+                  </span>
+                </div>
+
+                {/* Day Columns */}
+                {weekDates.map((date, dayIndex) => {
+                  const slotAppointments = getAppointmentsForTimeSlot(date, hour, appointments)
                   const holiday = getHolidayForDate(date, holidays)
-                  const isToday = isSameDay(date, new Date())
                   
                   return (
-                    <div
-                      key={i}
+                    <div 
+                      key={dayIndex}
                       className={cn(
-                        "p-3 text-center border-r last:border-r-0",
-                        isToday && "bg-blue-50",
-                        holiday && "bg-amber-50 border-l-4 border-l-amber-400"
+                        "px-2 py-2 relative border-r border-slate-200",
+                        "hover:bg-slate-50 transition-colors cursor-pointer",
+                        holiday && "bg-red-50",
+                        hour === 0 && "border-t-0"
                       )}
+                      onClick={() => onTimeSlotClick?.(date, hour)}
                     >
-                      <div className="text-xs text-muted-foreground">{weekDays[i]}</div>
-                      <div className={cn(
-                        "text-sm font-medium", 
-                        isToday && "text-blue-600",
-                        holiday && "text-amber-800"
-                      )}>
-                        {format(date, "dd.MM", { locale: de })}
-                      </div>
-                      
                       {holiday && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge 
-                              variant="outline" 
-                              className={cn(
-                                "text-xs mt-1 cursor-help",
-                                // Design System: holiday warm palette
-                                "bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200"
-                              )}
-                            >
-                              {holiday.note || "Feiertag"}
-                            </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {renderHolidayTooltip(holiday)}
-                          </TooltipContent>
-                        </Tooltip>
+                        <div className="absolute inset-0 bg-red-100 opacity-50 pointer-events-none" />
                       )}
+                      
+                      {slotAppointments.map((apt) => (
+                        <div
+                          key={apt.id}
+                          className={cn(
+                            "mb-1 p-1 rounded border cursor-pointer transition-all text-xs",
+                            "hover:shadow-sm hover:-translate-y-0.5",
+                            apt.source === "doctolib" 
+                              ? "bg-blue-50 border-blue-200 hover:bg-blue-100" 
+                              : "bg-green-50 border-green-200 hover:bg-green-100"
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onAppointmentClick?.(apt)
+                          }}
+                        >
+                          <p className="font-medium text-slate-900 truncate">
+                            {apt.title}
+                          </p>
+                          {apt.patientName && (
+                            <p className="text-slate-600 truncate">
+                              {apt.patientName}
+                            </p>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )
                 })}
               </div>
-            </div>
-          </div>
-
-          {/* Time Grid */}
-          <div className="grid grid-cols-[60px_1fr] gap-0">
-            {/* Time Labels */}
-            <div className="border-r">
-              {timeSlots.map((time, i) => (
-                <div key={time} className="h-16 border-b flex items-start justify-end pr-2 pt-1">
-                  <span className="text-xs text-muted-foreground">{time}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar Body */}
-            <div className={cn("grid gap-0", view === "week" ? "grid-cols-7" : "grid-cols-1")}>
-              {dates.map((date, dateIndex) => (
-                <div key={dateIndex} className="border-r last:border-r-0">
-                  {timeSlots.map((time, timeIndex) => {
-                    const hour = Number.parseInt(time.split(":")[0])
-                    const slotAppointments = getAppointmentsForTimeSlot(date, hour, appointments)
-                    const holiday = getHolidayForDate(date, holidays)
-                    const hasAppointments = slotAppointments.length > 0
-                    const isPastTime = new Date(date) < new Date() && hour < new Date().getHours()
-
-                    return (
-                      <div
-                        key={`${dateIndex}-${timeIndex}`}
-                        className={cn(
-                          "h-16 border-b relative transition-colors group",
-                          // Design System: blocked grid ranges with subtle warm tint
-                          holiday && [
-                            "bg-amber-50/30",
-                            "border-l-2 border-l-amber-300/50"
-                          ],
-                          // Click to add functionality
-                          !hasAppointments && !holiday && !isPastTime && [
-                            "hover:bg-blue-50/50 cursor-pointer",
-                            "group-hover:after:content-['+'] group-hover:after:absolute group-hover:after:inset-0",
-                            "group-hover:after:flex group-hover:after:items-center group-hover:after:justify-center",
-                            "group-hover:after:text-blue-600 group-hover:after:text-xl group-hover:after:font-bold"
-                          ],
-                          hasAppointments && "hover:bg-muted/30",
-                          isPastTime && "bg-slate-50 opacity-60"
-                        )}
-                        onClick={() => handleTimeSlotClick(date, hour, hasAppointments)}
-                        title={!hasAppointments && !holiday && !isPastTime ? "Klicken Sie hier, um einen Termin hinzuzufügen" : undefined}
-                      >
-                        {/* Holiday overlay tooltip */}
-                        {holiday && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="absolute inset-0 cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {renderHolidayTooltip(holiday)}
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-
-                        {/* Appointments */}
-                        {slotAppointments.map((appointment, aptIndex) => {
-                          // Parse dates safely
-                          let startTime = ""
-                          let endTime = ""
-                          try {
-                            startTime = format(parseISO(appointment.start), "HH:mm", { locale: de })
-                            endTime = format(parseISO(appointment.end), "HH:mm", { locale: de })
-                          } catch (error) {
-                            console.warn('Error formatting appointment time:', appointment, error)
-                            startTime = "??"
-                            endTime = "??"
-                          }
-
-                          return (
-                            <Tooltip key={appointment.id}>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  className={cn(
-                                    "absolute inset-x-1 h-14 p-2 text-left justify-start border z-10",
-                                    appointment.source === "doctolib" && [
-                                      "bg-blue-100 hover:bg-blue-200 border-blue-200",
-                                      "text-blue-800"
-                                    ],
-                                    appointment.source === "native" && [
-                                      "bg-green-100 hover:bg-green-200 border-green-200", 
-                                      "text-green-800"
-                                    ],
-                                    // Adjust for holiday overlay
-                                    holiday && "opacity-90"
-                                  )}
-                                  style={{
-                                    top: `${aptIndex * 2}px`,
-                                    zIndex: 10 + aptIndex,
-                                  }}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    onAppointmentClick?.(appointment)
-                                  }}
-                                >
-                                  <div className="min-w-0 flex-1">
-                                    <div className="text-xs font-medium truncate">
-                                      {appointment.patientName || appointment.title}
-                                    </div>
-                                    <div className="text-xs truncate opacity-80">
-                                      {startTime} - {endTime}
-                                    </div>
-                                  </div>
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <div className="space-y-1">
-                                  <div className="font-medium">{appointment.patientName || appointment.title}</div>
-                                  <div className="text-xs">
-                                    {startTime} - {endTime}
-                                  </div>
-                                  {appointment.service && <div className="text-xs">Notizen: {appointment.service}</div>}
-                                  {appointment.practitioner && (
-                                    <div className="text-xs">Arzt: {appointment.practitioner}</div>
-                                  )}
-                                  <Badge 
-                                    variant="outline" 
-                                    className={cn(
-                                      "text-xs",
-                                      appointment.source === "doctolib" 
-                                        ? "bg-blue-50 text-blue-700 border-blue-200"
-                                        : "bg-green-50 text-green-700 border-green-200"
-                                    )}
-                                  >
-                                    {appointment.source === "doctolib" ? "Doctolib" : "Nativ"}
-                                  </Badge>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          )
-                        })}
-                      </div>
-                    )
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
+            )
+          })}
         </div>
       </div>
-    </TooltipProvider>
+    </div>
   )
 } 

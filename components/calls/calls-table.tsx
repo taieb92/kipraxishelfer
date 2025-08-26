@@ -98,230 +98,268 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
     <TableRow>
       <TableCell colSpan={7} className="h-32">
         <div className="flex flex-col items-center justify-center text-center">
-          <Phone className="h-12 w-12 text-slate-300 mb-3" />
-          {hasFilters ? (
-            <>
-              <h3 className="text-slate-900 font-medium mb-1">Keine Anrufe gefunden</h3>
-              <p className="text-slate-500 text-sm mb-4">
-                Versuchen Sie, die Filter zu ändern oder zu entfernen.
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={() => window.location.href = '/calls'}
-                className="text-sm"
-              >
-                Alle anzeigen
-              </Button>
-            </>
-          ) : (
-            <>
-              <h3 className="text-slate-900 font-medium mb-1">Noch keine Anrufe</h3>
-              <p className="text-slate-500 text-sm">
-                Anrufe werden hier angezeigt, sobald sie eingehen.
-              </p>
-            </>
-          )}
+          <div className="h-12 w-12 bg-slate-200 rounded-full mb-4 animate-pulse" />
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+            {hasFilters ? "Keine Anrufe gefunden" : "Keine Anrufe vorhanden"}
+          </h3>
+          <p className="text-slate-600 max-w-sm">
+            {hasFilters 
+              ? "Versuchen Sie andere Filtereinstellungen oder suchen Sie nach anderen Begriffen."
+              : "Es wurden noch keine Anrufe in diesem Zeitraum registriert."
+            }
+          </p>
         </div>
       </TableCell>
     </TableRow>
   )
 }
 
+// Mobile card view for small screens
+function MobileCallCard({ call }: { call: CallItem }) {
+  const router = useRouter()
+  
+  return (
+    <div 
+      className={cn(
+        "bg-white border border-slate-200 rounded-lg p-4 space-y-3 cursor-pointer",
+        "hover:bg-slate-50 transition-colors",
+        call.status === 'action_needed' && "border-l-4 border-l-red-500"
+      )}
+      onClick={() => router.push(`/calls/${call.id}`)}
+    >
+      {/* Header with caller and status */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10">
+            <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-medium">
+              {getCallerInitials(call.callerName, call.fromNumber)}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-medium text-slate-900 truncate">
+              {getCallerDisplay(call)}
+            </p>
+            <p className="text-sm text-slate-500">
+              {call.fromNumber}
+            </p>
+          </div>
+        </div>
+        <StatusBadge status={call.status} />
+      </div>
+
+      {/* Call details */}
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <p className="text-slate-500 mb-1">Kategorie</p>
+          <Badge 
+            variant="outline" 
+            className={cn("text-xs", categoryColors[call.category])}
+          >
+            {categoryLabels[call.category]}
+          </Badge>
+        </div>
+        <div>
+          <p className="text-slate-500 mb-1">Dauer</p>
+          <p className="font-medium text-slate-900">
+            {formatDuration(call.durationSec)}
+          </p>
+        </div>
+        <div>
+          <p className="text-slate-500 mb-1">Zeit</p>
+          <p className="font-medium text-slate-900">
+            {format(new Date(call.startedAt), "HH:mm", { locale: de })}
+          </p>
+        </div>
+        <div>
+          <p className="text-slate-500 mb-1">Richtung</p>
+          <div className="flex items-center gap-1">
+            {call.direction === 'inbound' ? (
+              <Phone className="h-3 w-3 text-green-600" />
+            ) : (
+              <PhoneOutgoing className="h-3 w-3 text-blue-600" />
+            )}
+            <span className="text-xs text-slate-600">
+              {call.direction === 'inbound' ? 'Eingehend' : 'Ausgehend'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Action button */}
+      <div className="pt-2 border-t border-slate-100">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full"
+          onClick={(e) => {
+            e.stopPropagation()
+            router.push(`/calls/${call.id}`)
+          }}
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          Anruf anzeigen
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export function CallsTable({ calls, loading = false, className }: CallsTableProps) {
   const router = useRouter()
 
-  const handleRowClick = (callId: string) => {
-    router.push(`/calls/${callId}`)
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-slate-200 animate-pulse" />
+              <div className="space-y-2 flex-1">
+                <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
+                <div className="h-3 w-24 bg-slate-200 rounded animate-pulse" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, j) => (
+                <div key={j} className="space-y-1">
+                  <div className="h-3 w-16 bg-slate-200 rounded animate-pulse" />
+                  <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
-  const handleViewClick = (e: React.MouseEvent, callId: string) => {
-    e.stopPropagation() // Prevent row click
-    router.push(`/calls/${callId}`)
+  if (calls.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="h-16 w-16 bg-slate-200 rounded-full mx-auto mb-4 animate-pulse" />
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">
+          Keine Anrufe gefunden
+        </h3>
+        <p className="text-slate-600 max-w-sm mx-auto">
+          Es wurden keine Anrufe mit den aktuellen Filtereinstellungen gefunden.
+        </p>
+      </div>
+    )
   }
-
-  // Check if there are any applied filters (simplified check)
-  const hasFilters = window.location.search.includes('?')
 
   return (
-    <div className={cn("rounded-lg border border-slate-200 bg-white", className)}>
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-slate-50 hover:bg-slate-50">
-            <TableHead scope="col" className="text-slate-700 font-medium">
-              Anrufer
-            </TableHead>
-            <TableHead scope="col" className="text-slate-700 font-medium">
-              Zeit
-            </TableHead>
-            <TableHead scope="col" className="text-slate-700 font-medium">
-              Dauer
-            </TableHead>
-            <TableHead scope="col" className="text-slate-700 font-medium">
-              Kategorie
-            </TableHead>
-            <TableHead scope="col" className="text-slate-700 font-medium">
-              Status
-            </TableHead>
-            <TableHead scope="col" className="text-slate-700 font-medium">
-              Tags
-            </TableHead>
-            <TableHead scope="col" className="text-slate-700 font-medium text-right">
-              Aktionen
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {loading ? (
-            // Loading skeletons
-            Array.from({ length: 5 }).map((_, i) => (
-              <LoadingSkeleton key={i} />
-            ))
-          ) : calls.length === 0 ? (
-            // Empty state
-            <EmptyState hasFilters={hasFilters} />
-          ) : (
-            // Actual data
-            calls.map((call) => (
-              <TableRow
-                key={call.id}
-                onClick={() => handleRowClick(call.id)}
-                className={cn(
-                  "cursor-pointer transition-colors duration-200",
-                  // Design System: row hover #F8FAFC
-                  "hover:bg-slate-50",
-                  // Design System: borders #E2E8F0
-                  "border-b border-slate-200",
-                  // Design System: focus ring for keyboard navigation
-                  "focus:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2",
-                  // Status emphasis: left accent border for action_needed
-                  call.status === "action_needed" && "border-l-4 border-l-yellow-400"
-                )}
-                tabIndex={0}
-                role="button"
-                aria-label={`View call details for ${getCallerDisplay(call)}`}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    handleRowClick(call.id)
-                  }
-                }}
-              >
-                {/* Caller */}
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs font-medium bg-slate-100 text-slate-600">
-                        {getCallerInitials(call.callerName, call.fromNumber)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-900 truncate">
-                          {getCallerDisplay(call)}
-                        </span>
-                        {call.direction === "outbound" ? (
-                          <PhoneOutgoing className="h-3 w-3 text-slate-400" />
-                        ) : (
-                          <Phone className="h-3 w-3 text-slate-400" />
-                        )}
-                      </div>
-                      {call.callerName && call.fromNumber && (
-                        <span className="text-xs text-slate-500 truncate">
-                          {call.fromNumber}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </TableCell>
+    <div className={className}>
+      {/* Mobile view - Cards */}
+      <div className="block sm:hidden space-y-4">
+        {calls.map((call) => (
+          <MobileCallCard key={call.id} call={call} />
+        ))}
+      </div>
 
-                {/* Time */}
-                <TableCell className="text-slate-600">
-                  <div className="flex flex-col">
-                    <span className="text-sm">
-                      {format(new Date(call.startedAt), "HH:mm", { locale: de })}
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      {format(new Date(call.startedAt), "dd.MM.yyyy", { locale: de })}
-                    </span>
-                  </div>
-                </TableCell>
-
-                {/* Duration */}
-                <TableCell className="text-slate-600 text-sm">
-                  {formatDuration(call.durationSec)}
-                </TableCell>
-
-                {/* Category */}
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-xs font-medium",
-                      categoryColors[call.category]
-                    )}
-                  >
-                    {categoryLabels[call.category]}
-                  </Badge>
-                </TableCell>
-
-                {/* Status */}
-                <TableCell>
-                  <StatusBadge status={call.status} />
-                </TableCell>
-
-                {/* Tags */}
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {call.tags.slice(0, 2).map((tag, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-xs text-slate-600 bg-slate-100"
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
-                    {call.tags.length > 2 && (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs text-slate-500 bg-slate-100"
-                      >
-                        +{call.tags.length - 2}
-                      </Badge>
-                    )}
-                  </div>
-                </TableCell>
-
-                {/* Actions */}
-                <TableCell className="text-right">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleViewClick(e, call.id)}
-                          className={cn(
-                            "h-8 w-8 p-0",
-                            "hover:bg-slate-100",
-                            "focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                          )}
-                          aria-label={`View details for call ${call.id}`}
-                        >
-                          <Eye className="h-4 w-4 text-slate-600" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">
-                        <p>Details anzeigen</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </TableCell>
+      {/* Desktop view - Table */}
+      <div className="hidden sm:block">
+        <div className="rounded-lg border border-slate-200 overflow-hidden">
+          <Table>
+            <TableHeader className="bg-slate-50">
+              <TableRow>
+                <TableHead className="font-medium text-slate-700">Anrufer</TableHead>
+                <TableHead className="font-medium text-slate-700">Kategorie</TableHead>
+                <TableHead className="font-medium text-slate-700">Dauer</TableHead>
+                <TableHead className="font-medium text-slate-700">Status</TableHead>
+                <TableHead className="font-medium text-slate-700">Richtung</TableHead>
+                <TableHead className="font-medium text-slate-700">Zeit</TableHead>
+                <TableHead className="font-medium text-slate-700 w-24">Aktion</TableHead>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            </TableHeader>
+            <TableBody>
+              {calls.map((call) => (
+                <TableRow 
+                  key={call.id}
+                  className={cn(
+                    "cursor-pointer hover:bg-slate-50 transition-colors",
+                    call.status === 'action_needed' && "border-l-4 border-l-red-500"
+                  )}
+                  onClick={() => router.push(`/calls/${call.id}`)}
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-medium">
+                          {getCallerInitials(call.callerName, call.fromNumber)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-900 truncate">
+                          {getCallerDisplay(call)}
+                        </p>
+                        <p className="text-sm text-slate-500 truncate">
+                          {call.fromNumber}
+                        </p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge 
+                      variant="outline" 
+                      className={cn("text-xs", categoryColors[call.category])}
+                    >
+                      {categoryLabels[call.category]}
+                    </Badge>
+                  </TableCell>
+                  
+                  <TableCell className="font-medium text-slate-900">
+                    {formatDuration(call.durationSec)}
+                  </TableCell>
+                  
+                  <TableCell>
+                    <StatusBadge status={call.status} />
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {call.direction === 'inbound' ? (
+                        <Phone className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <PhoneOutgoing className="h-4 w-4 text-blue-600" />
+                      )}
+                      <span className="text-sm text-slate-600">
+                        {call.direction === 'inbound' ? 'Eingehend' : 'Ausgehend'}
+                      </span>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell className="text-sm text-slate-600">
+                    {format(new Date(call.startedAt), "dd.MM.yyyy HH:mm", { locale: de })}
+                  </TableCell>
+                  
+                  <TableCell>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/calls/${call.id}`)
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Anruf anzeigen</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   )
 }
